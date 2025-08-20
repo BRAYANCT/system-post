@@ -1,9 +1,20 @@
+// /firebase/lib/users.ts
+"use client";
+
 import { auth, db } from "@/firebase/config";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc, updateDoc, getDocs, collection, serverTimestamp } from "firebase/firestore";
+import {
+  doc,
+  setDoc,
+  updateDoc,
+  getDocs,
+  collection,
+  serverTimestamp,
+  getDoc,
+} from "firebase/firestore";
 import { UserData } from "@/firebase/types/user";
 
-// Registrar usuario (ya lo tienes)
+/** Registrar usuario */
 export async function registerUser(userData: UserData, file?: File) {
   try {
     let fotoURL = userData.fotoURL || "";
@@ -18,17 +29,25 @@ export async function registerUser(userData: UserData, file?: File) {
       formData.append("file", file);
       formData.append("upload_preset", uploadPreset);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        {
+          method: "POST",
+          body: formData,
+        }
+      );
 
       if (!res.ok) throw new Error("Error al subir imagen a Cloudinary");
+
       const data = await res.json();
       fotoURL = data.secure_url;
     }
 
-    const cred = await createUserWithEmailAndPassword(auth, userData.email!, userData.password!);
+    const cred = await createUserWithEmailAndPassword(
+      auth,
+      userData.email!,
+      userData.password!
+    );
     const uid = cred.user.uid;
 
     await setDoc(doc(db, "users", uid), {
@@ -36,8 +55,8 @@ export async function registerUser(userData: UserData, file?: File) {
       username: userData.username,
       email: userData.email,
       telefono: userData.telefono,
-      rol: userData.rol,
-      status: userData.status,
+      rol: userData.rol || "cliente",
+      status: userData.status || 1,
       uid,
       fotoURL,
       creadoEn: serverTimestamp(),
@@ -53,19 +72,39 @@ export async function registerUser(userData: UserData, file?: File) {
   }
 }
 
-// Obtener todos los usuarios
-export async function getUsers() {
+/** Obtener todos los usuarios */
+/** Obtener todos los usuarios */
+export async function listUsers(): Promise<UserData[]> {
   try {
     const snapshot = await getDocs(collection(db, "users"));
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    return snapshot.docs.map((doc) => {
+      const data = doc.data();
+
+      return {
+        uid: doc.id,
+        nombre: data.nombre || "",
+        username: data.username || "",
+        email: data.email || "",
+        telefono: data.telefono || "",
+        fotoURL: data.fotoURL || "",
+        password: data.password || "",
+        status: (data.status ?? 2) as 1 | 2,   // obligatorio
+        rol: (data.rol || "cliente") as "admin" | "empleado" | "cliente", // obligatorio
+        creadoEn: data.creadoEn?.seconds || Date.now(), // obligatorio
+      };
+    });
   } catch (error) {
     console.error("Error al obtener usuarios:", error);
     return [];
   }
 }
 
-// Editar usuario
-export async function updateUser(uid: string, data: Partial<UserData>, file?: File) {
+/** Editar usuario */
+export async function updateUser(
+  uid: string,
+  data: Partial<UserData>,
+  file?: File
+) {
   try {
     let fotoURL = data.fotoURL || "";
 
@@ -79,10 +118,10 @@ export async function updateUser(uid: string, data: Partial<UserData>, file?: Fi
       formData.append("file", file);
       formData.append("upload_preset", uploadPreset);
 
-      const res = await fetch(`https://api.cloudinary.com/v1_1/${cloudName}/image/upload`, {
-        method: "POST",
-        body: formData,
-      });
+      const res = await fetch(
+        `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
+        { method: "POST", body: formData }
+      );
 
       if (!res.ok) throw new Error("Error al subir imagen a Cloudinary");
       const resData = await res.json();
@@ -101,7 +140,7 @@ export async function updateUser(uid: string, data: Partial<UserData>, file?: Fi
   }
 }
 
-// Activar/Inactivar usuario
+/** Activar/Inactivar usuario */
 export async function toggleUserStatus(uid: string, newStatus: number) {
   try {
     await updateDoc(doc(db, "users", uid), { status: newStatus });
@@ -109,5 +148,30 @@ export async function toggleUserStatus(uid: string, newStatus: number) {
   } catch (error: any) {
     console.error("Error al cambiar estado:", error);
     return { success: false, message: "Error al cambiar estado" };
+  }
+}
+export async function getUserById(uid: string): Promise<UserData | null> {
+  try {
+    const ref = doc(db, "users", uid);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) return null;
+
+    const data = snap.data();
+    return {
+      uid: snap.id,
+      nombre: data.nombre || "",
+      username: data.username || "",
+      email: data.email || "",
+      telefono: data.telefono || "",
+      fotoURL: data.fotoURL || "",
+      password: data.password || "",
+      status: (data.status ?? 2) as 1 | 2,
+      rol: (data.rol || "cliente") as "admin" | "empleado" | "cliente",
+      creadoEn: data.creadoEn?.seconds || Date.now(),
+    };
+  } catch (error) {
+    console.error("Error al obtener usuario por ID:", error);
+    return null;
   }
 }

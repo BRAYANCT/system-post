@@ -1,4 +1,4 @@
-//(home)/dashboard/user/_components/personal-info.tsx
+//dashboard/user/_components/personal-info.tsx
 
 "use client";
 

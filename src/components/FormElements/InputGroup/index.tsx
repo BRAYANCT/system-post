@@ -17,6 +17,8 @@ type InputGroupProps = {
   iconPosition?: "left" | "right";
   height?: "sm" | "default";
   defaultValue?: string;
+    error?: string; // 🔹 agregamos esta línea
+
 };
 
 const InputGroup: React.FC<InputGroupProps> = ({

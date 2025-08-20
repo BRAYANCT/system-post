@@ -1,6 +1,6 @@
 // app/(home)/page.tsx
 
-export default async function Home() {
+export default async function PageHome() {
 
   return (
     <>
