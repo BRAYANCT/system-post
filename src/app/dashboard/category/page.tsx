@@ -1,18 +1,19 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster, toast } from "react-hot-toast";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
-import RegisterCategory from "./_components/register-category"; // tu formulario de categoría
-import DataTableCategory from "./category-list/page"; // tu tabla de categorías
+import RegisterCategory from "./_components/register-category";
+import DataTableCategory, { DataTableCategoryHandle } from "./category-list/page";
 
 export default function CategoryPage() {
   const [showForm, setShowForm] = useState(false);
-  const tableRef = useRef<{ fetchData: () => void }>(null);
+  const tableRef = useRef<DataTableCategoryHandle>(null);
 
   const handleCategorySaved = () => {
     setShowForm(false);
     tableRef.current?.fetchData(); // refresca la tabla automáticamente
+    toast.success("Categoría creada con éxito!");
   };
 
   return (

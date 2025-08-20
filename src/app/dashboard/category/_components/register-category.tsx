@@ -3,13 +3,15 @@
 import { useState, useEffect } from "react";
 import { db, auth } from "@/firebase/config";
 import { doc, setDoc, serverTimestamp, collection, getDoc } from "firebase/firestore";
-import { useRouter } from "next/navigation";
 
-export default function RegisterCategory() {
+interface RegisterCategoryProps {
+  onCategorySaved: () => void;
+}
+
+export default function RegisterCategory({ onCategorySaved }: RegisterCategoryProps) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
   const [currentUsername, setCurrentUsername] = useState("");
-  const router = useRouter();
 
   // Obtener el username del usuario logueado
   useEffect(() => {
@@ -36,13 +38,17 @@ export default function RegisterCategory() {
         nombre,
         descripcion,
         usuarioId: auth.currentUser.uid, // uid del creador
-        userCategory: currentUsername,        // username del creador
+        userCategory: currentUsername,   // username del creador
         status: 1,                       // activo por defecto
         creadoEn: serverTimestamp(),
       });
 
-      alert("Categoría creada!");
-      router.push("/dashboard/category"); // ruta del listado
+      // Llamamos al callback para refrescar tabla y mostrar toast
+      onCategorySaved();
+
+      // Limpiar el formulario
+      setNombre("");
+      setDescripcion("");
     } catch (error) {
       console.error(error);
       alert("Error creando categoría");

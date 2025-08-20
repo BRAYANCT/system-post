@@ -8,8 +8,8 @@ import {
   toggleCategoryStatus,
 } from "@/firebase/lib/categorias";
 import { CategoryData } from "@/firebase/lib/categorias";
-import { toast } from "sonner";
 import EditCategoryModal from "../_components/editar-category";
+import { Toaster, toast } from "react-hot-toast";
 
 const DataTableCategory = forwardRef((props, ref) => {
   const [data, setData] = useState<CategoryData[]>([]);
